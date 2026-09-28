@@ -98,6 +98,7 @@ class ModelParams(ParamGroup):
         # support confidence:
         # n / (n + tau)
         self.coverage_tau = 4.0
+        self.coverage_reg_beta = 4.0
 
         super().__init__(parser, "Loading Parameters", sentinel)
 

@@ -627,6 +627,7 @@ class PersonalizedMotionNetwork(nn.Module):
         coverage_scale = torch.ones((1, 1), device=x.device, dtype=x.dtype)
         local_confidence = torch.zeros((1, 1), device=x.device, dtype=x.dtype)
         global_confidence = torch.zeros((1, 1), device=x.device, dtype=x.dtype)
+        evidence_confidence = torch.zeros((1, 1), device=x.device, dtype=x.dtype)
 
         if self.use_viseme_shared_residual and viseme_id is not None:
             if not torch.is_tensor(viseme_id):
@@ -663,7 +664,7 @@ class PersonalizedMotionNetwork(nn.Module):
                 evidence_confidence = global_confidence * local_confidence
                 coverage_scale = (1.0 - evidence_confidence).clamp(0.0, 1.0)
 
-            viseme_d_xyz = viseme_d_xyz_local * coverage_scale
+            viseme_d_xyz = viseme_d_xyz_local
 
         return {
             'd_xyz': d_xyz,
@@ -681,6 +682,7 @@ class PersonalizedMotionNetwork(nn.Module):
             'coverage_scale': coverage_scale,
             'local_confidence': local_confidence,
             'global_confidence': global_confidence,
+            'evidence_confidence': evidence_confidence,
         }
 
     def get_params(self, lr, lr_net, wd=0):

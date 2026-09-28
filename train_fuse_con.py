@@ -180,16 +180,17 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     ].abs().mean()
             )
 
-        if (
-                getattr(
-                    dataset,
-                    "use_viseme_shared_residual",
-                    False
-                )
-                and render_pkg["p_motion"]
-                is not None
-        ):
-            loss += dataset.viseme_reg * render_pkg["p_motion"]["viseme_d_xyz_local"].abs().mean()
+
+        if getattr(dataset, "use_viseme_shared_residual", False) and render_pkg["p_motion"] is not None:
+            viseme_residual = render_pkg["p_motion"]["viseme_d_xyz_local"]
+
+            if getattr(dataset, "use_coverage_adaptive", False):
+                evidence = render_pkg["p_motion"]["evidence_confidence"].detach()
+                reg_weight = dataset.viseme_reg * (1.0 + dataset.coverage_reg_beta * evidence)
+            else:
+                reg_weight = dataset.viseme_reg
+
+            loss += reg_weight * viseme_residual.abs().mean()
         loss.backward()
 
         iter_end.record()

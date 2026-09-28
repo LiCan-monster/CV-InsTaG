@@ -308,35 +308,16 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                         is not None
                         and iteration % 1000 == 0
                 ):
-                    loss += dataset.viseme_reg * render_pkg["p_motion"]["viseme_d_xyz_local"].abs().mean()
-                    gate = render_pkg[
-                        "p_motion"
-                    ][
-                        "viseme_gate"
-                    ]
+                    if getattr(dataset, "use_viseme_shared_residual", False) and render_pkg["p_motion"] is not None:
+                        viseme_residual = render_pkg["p_motion"]["viseme_d_xyz_local"]
 
-                    residual = render_pkg[
-                        "p_motion"
-                    ][
-                        "viseme_d_xyz"
-                    ]
+                        if getattr(dataset, "use_coverage_adaptive", False):
+                            evidence = render_pkg["p_motion"]["evidence_confidence"].detach()
+                            reg_weight = dataset.viseme_reg * (1.0 + dataset.coverage_reg_beta * evidence)
+                        else:
+                            reg_weight = dataset.viseme_reg
+                        loss += reg_weight * viseme_residual.abs().mean()
 
-                    print(
-                        "[ML-VSR]",
-                        "iter =", iteration,
-                        "gate_mean =",
-                        gate.mean().item(),
-                        "gate_max =",
-                        gate.max().item(),
-                        "res_mean =",
-                        residual.norm(
-                            dim=-1
-                        ).mean().item(),
-                        "res_max =",
-                        residual.norm(
-                            dim=-1
-                        ).max().item()
-                    )
                 if (
                         getattr(
                             dataset,
